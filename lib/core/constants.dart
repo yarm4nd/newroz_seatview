@@ -6,13 +6,16 @@ class AppConstants {
   static const String databaseName = 'newroz_stadium.db';
   static const String currency = 'IQD';
 
+  /// Total seats in the stadium (must match the layout in models/seat.dart).
+  static const int stadiumCapacity = 13500;
+
   /// Maximum number of seats a person can book in one order.
   static const int maxSeatsPerBooking = 6;
 
-  /// Event shown in the app. Change these values for each match.
-  static const String eventTitle = 'Newroz SC vs Duhok FC';
-  static const String eventSubtitle = 'Iraqi Stars League';
+  /// Next Newroz home match shown in the app.
+  static const String eventTitle = 'Newroz vs Al Karma';
+  static const String eventSubtitle = 'Iraq Stars League 2026–27';
   static const String venue = 'Newroz Stadium, Sulaymaniyah';
 
-  static final DateTime eventDate = DateTime(2026, 12, 5, 18, 0);
+  static final DateTime eventDate = DateTime(2026, 11, 21, 14, 0);
 }

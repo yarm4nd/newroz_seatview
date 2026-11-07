@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../core/formatters.dart';
@@ -9,16 +10,19 @@ import '../widgets/stadium_map.dart';
 import 'preview_screen.dart';
 import 'seats_screen.dart';
 
-/// Step 1: choose a stand on the stadium plan.
+/// Step 1: choose a block on the stadium plan.
 class StadiumScreen extends StatelessWidget {
   const StadiumScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final booking = context.watch<BookingProvider>();
+    final theme = Theme.of(context);
+    final capacity =
+        NumberFormat.decimalPattern().format(StadiumSection.totalCapacity);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Choose a stand')),
+      appBar: AppBar(title: const Text('Choose a block')),
       body: booking.isLoading
           ? const Center(child: CircularProgressIndicator())
           : Center(
@@ -27,18 +31,37 @@ class StadiumScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        'Stadium capacity: $capacity seats',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                    ),
                     StadiumMap(
                       availableIn: booking.availableCount,
                       selectedIn: booking.selectedCountIn,
                       onSectionTap: (section) => _openSection(context, section),
                     ),
-                    const SizedBox(height: 20),
-                    for (final section in StadiumSection.all)
-                      _SectionRow(
-                        section: section,
-                        available: booking.availableCount(section),
-                        onTap: () => _openSection(context, section),
+                    const SizedBox(height: 12),
+                    for (final stand in StadiumSection.stands) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+                        child: Text(
+                          stand,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
+                      for (final section in StadiumSection.inStand(stand))
+                        _SectionRow(
+                          section: section,
+                          available: booking.availableCount(section),
+                          onTap: () => _openSection(context, section),
+                        ),
+                    ],
                   ],
                 ),
               ),
@@ -78,7 +101,7 @@ class _SectionRow extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: theme.colorScheme.outlineVariant),
@@ -96,9 +119,11 @@ class _SectionRow extends StatelessWidget {
             ),
           ),
         ),
-        title: Text(section.name),
+        title: Text('Block ${section.block}'),
         subtitle: Text(
-          soldOut ? 'Sold out' : '$available of ${section.capacity} available',
+          soldOut
+              ? 'Sold out'
+              : '$available of ${section.capacity} seats available',
         ),
         trailing: Text(
           Formatters.currency(section.price),

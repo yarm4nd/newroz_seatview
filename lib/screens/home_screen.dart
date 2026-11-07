@@ -6,6 +6,7 @@ import '../core/formatters.dart';
 import '../core/theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/booking_provider.dart';
+import 'matches_screen.dart';
 import 'stadium_screen.dart';
 import 'tickets_screen.dart';
 
@@ -102,20 +103,24 @@ class HomeScreen extends StatelessWidget {
                         label: const Text('Book tickets'),
                       ),
                       const SizedBox(height: 12),
-                      OutlinedButton.icon(
+                      _OutlinedAction(
+                        icon: Icons.sports_soccer,
+                        label: 'League matches',
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const MatchesScreen(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _OutlinedAction(
+                        icon: Icons.confirmation_number_outlined,
+                        label: 'My tickets',
                         onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (_) => const TicketsScreen(),
                           ),
                         ),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(52),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        icon: const Icon(Icons.confirmation_number_outlined),
-                        label: const Text('My tickets'),
                       ),
                     ],
                   ),
@@ -125,6 +130,33 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _OutlinedAction extends StatelessWidget {
+  const _OutlinedAction({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(52),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+      icon: Icon(icon),
+      label: Text(label),
     );
   }
 }

@@ -10,7 +10,7 @@ import '../widgets/seat_widget.dart';
 import '../widgets/selection_bar.dart';
 import 'preview_screen.dart';
 
-/// Step 2: pick seats inside one stand.
+/// Step 2: pick seats inside one block (25 rows x 45 seats).
 class SeatsScreen extends StatelessWidget {
   const SeatsScreen({super.key, required this.section});
 
@@ -35,26 +35,10 @@ class SeatsScreen extends StatelessWidget {
         children: [
           const _Legend(),
           Expanded(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 640),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-                  children: [
-                    const _PitchDirection(),
-                    const SizedBox(height: 16),
-                    for (var row = 1; row <= section.rows; row++)
-                      _SeatRow(
-                        row: row,
-                        seats: seats
-                            .where((seat) => seat.row == row)
-                            .toList(growable: false),
-                        color: section.color,
-                        onSeatTap: (seat) => _onSeatTap(context, seat),
-                      ),
-                  ],
-                ),
-              ),
+            child: _SeatGrid(
+              section: section,
+              seats: seats,
+              onSeatTap: (seat) => _onSeatTap(context, seat),
             ),
           ),
         ],
@@ -85,6 +69,88 @@ class SeatsScreen extends StatelessWidget {
   }
 }
 
+/// Rows are built lazily; the grid scrolls sideways on narrow screens.
+class _SeatGrid extends StatelessWidget {
+  const _SeatGrid({
+    required this.section,
+    required this.seats,
+    required this.onSeatTap,
+  });
+
+  final StadiumSection section;
+
+  /// Ordered by row, then seat number (see `BookingProvider.seatsFor`).
+  final List<Seat> seats;
+  final ValueChanged<Seat> onSeatTap;
+
+  static const double _seatSize = 30;
+  static const double _gap = 2;
+  static const double _labelWidth = 32;
+  static const double _sidePadding = 8;
+
+  @override
+  Widget build(BuildContext context) {
+    const cell = _seatSize + _gap * 2;
+    final perRow = section.seatsPerRow;
+    final width = _labelWidth + perRow * cell + _sidePadding * 2;
+
+    final list = SizedBox(
+      width: width,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(_sidePadding, 8, _sidePadding, 24),
+        itemCount: section.rows + 2,
+        itemBuilder: (context, index) {
+          if (index == 0) return const _PitchDirection();
+          if (index == 1) return _NumberHeader(perRow: perRow);
+
+          final row = index - 1;
+          final rowSeats = seats.sublist((row - 1) * perRow, row * perRow);
+          return _SeatRow(
+            row: row,
+            seats: rowSeats,
+            color: section.color,
+            onSeatTap: onSeatTap,
+          );
+        },
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= width) return Center(child: list);
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: list,
+        );
+      },
+    );
+  }
+}
+
+class _NumberHeader extends StatelessWidget {
+  const _NumberHeader({required this.perRow});
+
+  final int perRow;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Row(
+        children: [
+          const SizedBox(width: _SeatGrid._labelWidth),
+          for (var n = 1; n <= perRow; n++)
+            SizedBox(
+              width: _SeatGrid._seatSize + _SeatGrid._gap * 2,
+              child: Center(child: Text('$n', style: style)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SeatRow extends StatelessWidget {
   const _SeatRow({
     required this.row,
@@ -100,31 +166,30 @@ class _SeatRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24,
-            child: Text(
-              '$row',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
+    return Row(
+      children: [
+        SizedBox(
+          width: _SeatGrid._labelWidth,
+          child: Text(
+            'R$row',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall,
           ),
-          for (final seat in seats)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: SeatWidget(
-                  seat: seat,
-                  sectionColor: color,
-                  onTap: () => onSeatTap(seat),
-                ),
+        ),
+        for (final seat in seats)
+          Padding(
+            padding: const EdgeInsets.all(_SeatGrid._gap),
+            child: SizedBox(
+              width: _SeatGrid._seatSize,
+              height: _SeatGrid._seatSize,
+              child: SeatWidget(
+                seat: seat,
+                sectionColor: color,
+                onTap: () => onSeatTap(seat),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
@@ -137,11 +202,9 @@ class _PitchDirection extends StatelessWidget {
     return Container(
       height: 28,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.pitch,
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(40),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
       ),
       child: const Text(
         'PITCH',

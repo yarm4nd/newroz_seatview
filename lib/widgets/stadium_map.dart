@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme.dart';
 import '../models/seat.dart';
 
-/// Top-down stadium plan: pitch in the middle, four tappable stands around.
+/// Top-down stadium plan: pitch in the middle, 12 tappable blocks around it.
 class StadiumMap extends StatelessWidget {
   const StadiumMap({
     super.key,
@@ -28,26 +28,54 @@ class StadiumMap extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Expanded(flex: 2, child: _tile(StadiumSection.north)),
+            Expanded(
+              flex: 2,
+              child: _strip(StadiumSection.north, Axis.horizontal),
+            ),
             const SizedBox(height: 8),
             Expanded(
-              flex: 5,
+              flex: 6,
               child: Row(
                 children: [
-                  Expanded(flex: 2, child: _tile(StadiumSection.west)),
+                  Expanded(
+                    flex: 2,
+                    child: _strip(StadiumSection.west, Axis.vertical),
+                  ),
                   const SizedBox(width: 8),
                   const Expanded(flex: 5, child: _Pitch()),
                   const SizedBox(width: 8),
-                  Expanded(flex: 2, child: _tile(StadiumSection.east)),
+                  Expanded(
+                    flex: 2,
+                    child: _strip(StadiumSection.east, Axis.vertical),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            Expanded(flex: 2, child: _tile(StadiumSection.south)),
+            Expanded(
+              flex: 2,
+              child: _strip(StadiumSection.south, Axis.horizontal),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  /// A row (or column) of blocks of one stand.
+  Widget _strip(List<StadiumSection> sections, Axis axis) {
+    final children = <Widget>[];
+    for (var i = 0; i < sections.length; i++) {
+      if (i > 0) {
+        children.add(
+          axis == Axis.horizontal
+              ? const SizedBox(width: 6)
+              : const SizedBox(height: 6),
+        );
+      }
+      children.add(Expanded(child: _tile(sections[i])));
+    }
+    return Flex(direction: axis, children: children);
   }
 
   Widget _tile(StadiumSection section) {
@@ -83,13 +111,13 @@ class _SectionTile extends StatelessWidget {
       label: '${section.name}, $available seats available',
       child: Material(
         color: color,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           onTap: soldOut ? null : onTap,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(3),
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Column(
@@ -99,30 +127,30 @@ class _SectionTile extends StatelessWidget {
                       section.id,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     Text(
                       soldOut ? 'Sold out' : '$available left',
-                      style: const TextStyle(color: Colors.white, fontSize: 11),
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
                     ),
                     if (selected > 0)
                       Container(
-                        margin: const EdgeInsets.only(top: 4),
+                        margin: const EdgeInsets.only(top: 3),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
+                          horizontal: 6,
+                          vertical: 1,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '$selected selected',
                           style: TextStyle(
                             color: color,
-                            fontSize: 10,
+                            fontSize: 9,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
