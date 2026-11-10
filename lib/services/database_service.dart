@@ -29,16 +29,19 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await _createTicketsTable(db);
         await _createUsersTable(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createUsersTable(db);
-        // Version 3: the stadium layout changed to 13,500 seats in 12 blocks,
-        // so tickets saved with the old seat ids are no longer valid.
+        // Version 3: the layout changed to 13,500 seats, so tickets saved
+        // with the old seat ids are no longer valid.
         if (oldVersion < 3) await db.delete(_tickets);
+        // Version 4: seats are now grouped in zones (A–W), so tickets saved
+        // with the old block ids are no longer valid.
+        if (oldVersion < 4) await db.delete(_tickets);
       },
     );
   }

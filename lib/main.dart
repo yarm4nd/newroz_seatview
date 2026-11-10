@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'providers/cart_provider.dart';
+import 'providers/membership_provider.dart';
 import 'core/constants.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
@@ -19,8 +21,19 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => AuthProvider(DatabaseService.instance)..init(),
         ),
+
         ChangeNotifierProvider(
           create: (_) => BookingProvider(DatabaseService.instance)..init(),
+        ),
+
+        // Membership Provider
+        ChangeNotifierProvider(
+          create: (_) => MembershipProvider()..init(),
+        ),
+
+        // Cart Provider
+        ChangeNotifierProvider(
+          create: (_) => CartProvider(),
         ),
       ],
       child: const NewrozApp(),

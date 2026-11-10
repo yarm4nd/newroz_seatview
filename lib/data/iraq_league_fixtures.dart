@@ -4,6 +4,10 @@ import '../models/league_match.dart';
 ///
 /// Sources: futbol24.com (8 Nov – 25 Dec) and soccerway.com (7 Nov).
 /// More rounds will be added here when they are announced.
+///
+/// The source lists kick-off times 2 hours earlier than Baghdad time, so
+/// [_m] adds 2 hours. (Check: Newroz vs Al Karma is 14:00 in the source
+/// and 16:00 in the club's ticket app.)
 class IraqLeagueFixtures {
   const IraqLeagueFixtures._();
 
@@ -84,7 +88,9 @@ class IraqLeagueFixtures {
   }
 }
 
-/// Builds a 2026 match. Leave [time] out when the kickoff is not confirmed.
+/// Builds a 2026 match. [time] is the source's time (HH:mm); 2 hours are
+/// added to get Baghdad time. Leave [time] out when the kickoff is not
+/// confirmed.
 LeagueMatch _m(
   int month,
   int day,
@@ -108,7 +114,7 @@ LeagueMatch _m(
       2026,
       month,
       day,
-      int.parse(parts[0]),
+      int.parse(parts[0]) + 2,
       int.parse(parts[1]),
     ),
   );

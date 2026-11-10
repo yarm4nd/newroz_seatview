@@ -6,11 +6,12 @@ import '../core/formatters.dart';
 import '../core/theme.dart';
 import '../models/seat.dart';
 import '../providers/booking_provider.dart';
+import '../widgets/booking_steps.dart';
 import '../widgets/seat_widget.dart';
 import '../widgets/selection_bar.dart';
 import 'preview_screen.dart';
 
-/// Step 2: pick seats inside one block (25 rows x 45 seats).
+/// Step 2: pick seats inside one zone.
 class SeatsScreen extends StatelessWidget {
   const SeatsScreen({super.key, required this.section});
 
@@ -24,6 +25,13 @@ class SeatsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(section.name),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(34),
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 10),
+            child: BookingSteps(current: 2),
+          ),
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),

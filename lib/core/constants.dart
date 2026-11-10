@@ -6,7 +6,7 @@ class AppConstants {
   static const String databaseName = 'newroz_stadium.db';
   static const String currency = 'IQD';
 
-  /// Total seats in the stadium (must match the layout in models/seat.dart).
+  /// Total seats in the stadium (must match the zones in models/seat.dart).
   static const int stadiumCapacity = 13500;
 
   /// Maximum number of seats a person can book in one order.
@@ -17,5 +17,5 @@ class AppConstants {
   static const String eventSubtitle = 'Iraq Stars League 2026–27';
   static const String venue = 'Newroz Stadium, Sulaymaniyah';
 
-  static final DateTime eventDate = DateTime(2026, 11, 21, 14, 0);
+  static final DateTime eventDate = DateTime(2026, 11, 21, 16, 0);
 }

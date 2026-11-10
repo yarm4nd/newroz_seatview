@@ -1,230 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../core/constants.dart';
-import '../core/formatters.dart';
-import '../core/theme.dart';
-import '../providers/auth_provider.dart';
-import '../providers/booking_provider.dart';
+import '../providers/cart_provider.dart';
+import 'account_tab.dart';
+import 'home_tab.dart';
 import 'matches_screen.dart';
-import 'stadium_screen.dart';
-import 'tickets_screen.dart';
+import 'membership_screen.dart';
+import 'shop_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+/// Main shell: bottom navigation with the five app sections.
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  Future<void> _logout(BuildContext context) async {
-    final auth = context.read<AuthProvider>();
-    context.read<BookingProvider>().clearSelection();
-    await auth.logout();
-  }
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _index = 0;
+
+  void _go(int index) => setState(() => _index = index);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final user = context.watch<AuthProvider>().user;
-    final firstName = (user?.name ?? '').split(' ').first;
+    final cartCount = context.watch<CartProvider>().count;
 
     return Scaffold(
-      body: Column(
+      body: IndexedStack(
+        index: _index,
         children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.fromLTRB(
-              24,
-              MediaQuery.of(context).padding.top + 24,
-              12,
-              36,
-            ),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.fire, AppColors.red],
-              ),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.local_fire_department,
-                      color: Colors.white,
-                      size: 44,
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      tooltip: 'Log out',
-                      onPressed: () => _logout(context),
-                      icon: const Icon(Icons.logout, color: Colors.white),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  AppConstants.appName,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  firstName.isEmpty
-                      ? 'Book your seat in a few taps'
-                      : 'Hello, $firstName! Book your seat in a few taps',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
+          HomeTab(onNavigate: _go),
+          const MatchesScreen(),
+          const ShopScreen(),
+          const MembershipScreen(),
+          AccountTab(onNavigate: _go),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: _go,
+        destinations: [
+          const NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
           ),
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _EventCard(),
-                      const SizedBox(height: 24),
-                      FilledButton.icon(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const StadiumScreen(),
-                          ),
-                        ),
-                        icon: const Icon(Icons.event_seat),
-                        label: const Text('Book tickets'),
-                      ),
-                      const SizedBox(height: 12),
-                      _OutlinedAction(
-                        icon: Icons.sports_soccer,
-                        label: 'League matches',
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const MatchesScreen(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _OutlinedAction(
-                        icon: Icons.confirmation_number_outlined,
-                        label: 'My tickets',
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const TicketsScreen(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+          const NavigationDestination(
+            icon: Icon(Icons.sports_soccer_outlined),
+            selectedIcon: Icon(Icons.sports_soccer),
+            label: 'Matches',
+          ),
+          NavigationDestination(
+            icon: Badge.count(
+              count: cartCount,
+              isLabelVisible: cartCount > 0,
+              child: const Icon(Icons.storefront_outlined),
             ),
+            selectedIcon: Badge.count(
+              count: cartCount,
+              isLabelVisible: cartCount > 0,
+              child: const Icon(Icons.storefront),
+            ),
+            label: 'Shop',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.workspace_premium_outlined),
+            selectedIcon: Icon(Icons.workspace_premium),
+            label: 'Membership',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Account',
           ),
         ],
       ),
-    );
-  }
-}
-
-class _OutlinedAction extends StatelessWidget {
-  const _OutlinedAction({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-      ),
-      icon: Icon(icon),
-      label: Text(label),
-    );
-  }
-}
-
-class _EventCard extends StatelessWidget {
-  const _EventCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppConstants.eventSubtitle.toUpperCase(),
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: AppColors.fire,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              AppConstants.eventTitle,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _InfoRow(
-              icon: Icons.calendar_today_outlined,
-              text: Formatters.dateTime(AppConstants.eventDate),
-            ),
-            const SizedBox(height: 8),
-            const _InfoRow(
-              icon: Icons.location_on_outlined,
-              text: AppConstants.venue,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: Theme.of(context).colorScheme.outline),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text)),
-      ],
     );
   }
 }
