@@ -16,16 +16,55 @@ class AppColors {
 class AppTheme {
   const AppTheme._();
 
-  static ThemeData get light {
+  static ThemeData get light => _build(Brightness.light);
+  static ThemeData get dark => _build(Brightness.dark);
+
+  static ThemeData _build(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final background =
+        isDark ? const Color(0xFF0F1114) : const Color(0xFFF6F4F1);
+    final surface = isDark ? const Color(0xFF1A1D22) : Colors.white;
+
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.fire,
+      brightness: brightness,
+    ).copyWith(
       primary: AppColors.fire,
+      onPrimary: Colors.white,
       secondary: AppColors.green,
+      surface: surface,
+      surfaceContainerLow: surface,
+      outlineVariant:
+          isDark ? const Color(0xFF2E333A) : const Color(0xFFE3DED8),
+      primaryContainer:
+          isDark ? const Color(0xFF3A1F10) : const Color(0xFFFFE8D9),
+      onPrimaryContainer: AppColors.fire,
     );
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: const Color(0xFFF6F4F1),
+      scaffoldBackgroundColor: background,
+      appBarTheme: AppBarTheme(
+        backgroundColor: background,
+        foregroundColor: scheme.onSurface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          color: scheme.onSurface,
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surface,
+        indicatorColor: scheme.primaryContainer,
+        elevation: 0,
+      ),
+      snackBarTheme:
+          const SnackBarThemeData(behavior: SnackBarBehavior.floating),
+      bottomSheetTheme: BottomSheetThemeData(backgroundColor: surface),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),

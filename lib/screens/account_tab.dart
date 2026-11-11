@@ -4,10 +4,11 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/membership_provider.dart';
+import '../widgets/theme_selector.dart';
 import 'cart_screen.dart';
 import 'tickets_screen.dart';
 
-/// Profile, shortcuts and log out.
+/// Profile, appearance, shortcuts and log out.
 class AccountTab extends StatelessWidget {
   const AccountTab({super.key, required this.onNavigate});
 
@@ -108,6 +109,8 @@ class AccountTab extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
+              const ThemeSelector(),
               const SizedBox(height: 12),
               _MenuTile(
                 icon: Icons.confirmation_number_outlined,

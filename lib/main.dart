@@ -1,44 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'providers/cart_provider.dart';
-import 'providers/membership_provider.dart';
 import 'core/constants.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/booking_provider.dart';
+import 'providers/cart_provider.dart';
+import 'providers/membership_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/auth_gate.dart';
 import 'services/database_init.dart';
 import 'services/database_service.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   initDatabaseFactory();
-
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(DatabaseService.instance)..init(),
-        ),
-
-        ChangeNotifierProvider(
-          create: (_) => BookingProvider(DatabaseService.instance)..init(),
-        ),
-
-        // Membership Provider
-        ChangeNotifierProvider(
-          create: (_) => MembershipProvider()..init(),
-        ),
-
-        // Cart Provider
-        ChangeNotifierProvider(
-          create: (_) => CartProvider(),
-        ),
-      ],
-      child: const NewrozApp(),
-    ),
-  );
+  runApp(const NewrozApp());
 }
 
 class NewrozApp extends StatelessWidget {
@@ -46,11 +23,28 @@ class NewrozApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConstants.appName,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      home: const AuthGate(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(DatabaseService.instance)..init(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => BookingProvider(DatabaseService.instance)..init(),
+        ),
+        ChangeNotifierProvider(create: (_) => MembershipProvider()..init()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) => MaterialApp(
+          title: AppConstants.appName,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeProvider.mode,
+          home: const AuthGate(),
+        ),
+      ),
     );
   }
 }

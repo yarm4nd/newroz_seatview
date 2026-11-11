@@ -6,6 +6,7 @@ import '../core/constants.dart';
 import '../core/formatters.dart';
 import '../core/theme.dart';
 import '../data/iraq_league_fixtures.dart';
+import '../data/news.dart';
 import '../data/shop_products.dart';
 import '../models/league_match.dart';
 import '../models/membership_tier.dart';
@@ -13,6 +14,8 @@ import '../providers/auth_provider.dart';
 import '../providers/membership_provider.dart';
 import '../widgets/product_art.dart';
 import '../widgets/team_crest.dart';
+import 'news_screen.dart';
+import 'squad_screen.dart';
 import 'stadium_screen.dart';
 import 'tickets_screen.dart';
 
@@ -25,7 +28,7 @@ String _when(LeagueMatch match) {
   return '${_dayFormat.format(match.kickoff)} • $time';
 }
 
-/// Dashboard: next Newroz match, quick actions, fixtures, shop and membership.
+/// Dashboard: next Newroz match, quick actions, fixtures, news, shop and membership.
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key, required this.onNavigate});
 
@@ -95,16 +98,24 @@ class HomeTab extends StatelessWidget {
                           ),
                           Expanded(
                             child: _ActionTile(
-                              icon: Icons.storefront_outlined,
-                              label: 'Shop',
-                              onTap: () => onNavigate(2),
+                              icon: Icons.groups_outlined,
+                              label: 'Squad',
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const SquadScreen(),
+                                ),
+                              ),
                             ),
                           ),
                           Expanded(
                             child: _ActionTile(
-                              icon: Icons.workspace_premium_outlined,
-                              label: 'Membership',
-                              onTap: () => onNavigate(3),
+                              icon: Icons.newspaper,
+                              label: 'News',
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const NewsScreen(),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -118,6 +129,18 @@ class HomeTab extends StatelessWidget {
                         ),
                         for (final match in later) _FixtureTile(match: match),
                       ],
+                      const SizedBox(height: 24),
+                      _SectionHeader(
+                        title: 'Latest news',
+                        action: 'See all',
+                        onAction: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const NewsScreen(),
+                          ),
+                        ),
+                      ),
+                      for (final item in NewsData.all.take(2))
+                        NewsCard(item: item),
                       const SizedBox(height: 24),
                       _SectionHeader(
                         title: 'Team shop',
