@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_strings.dart';
+import '../providers/locale_provider.dart';
 import '../providers/theme_provider.dart';
 
-/// Card with a System / Light / Dark switch.
 class ThemeSelector extends StatelessWidget {
   const ThemeSelector({super.key});
 
@@ -11,6 +12,7 @@ class ThemeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeProvider = context.watch<ThemeProvider>();
+    final lang = context.watch<LocaleProvider>().language;
 
     return Card(
       elevation: 0,
@@ -24,27 +26,27 @@ class ThemeSelector extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Appearance', style: theme.textTheme.labelLarge),
+            Text(AppStrings.of(lang, 'appearance'), style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               child: SegmentedButton<ThemeMode>(
                 showSelectedIcon: false,
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: ThemeMode.system,
-                    icon: Icon(Icons.brightness_auto),
-                    label: Text('System'),
+                    icon: const Icon(Icons.brightness_auto),
+                    label: Text(AppStrings.of(lang, 'system')),
                   ),
                   ButtonSegment(
                     value: ThemeMode.light,
-                    icon: Icon(Icons.light_mode_outlined),
-                    label: Text('Light'),
+                    icon: const Icon(Icons.light_mode_outlined),
+                    label: Text(AppStrings.of(lang, 'light')),
                   ),
                   ButtonSegment(
                     value: ThemeMode.dark,
-                    icon: Icon(Icons.dark_mode_outlined),
-                    label: Text('Dark'),
+                    icon: const Icon(Icons.dark_mode_outlined),
+                    label: Text(AppStrings.of(lang, 'dark')),
                   ),
                 ],
                 selected: {themeProvider.mode},

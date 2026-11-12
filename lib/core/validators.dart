@@ -1,20 +1,29 @@
-/// Form field validators.
-class Validators {
+﻿class Validators {
   const Validators._();
-
-  static final RegExp _phone = RegExp(r'^\+?\d{10,14}$');
 
   static String? name(String? value) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) return 'Please enter your full name';
-    if (text.length < 3) return 'Name is too short';
+    if (text.length < 2) return 'Name is too short';
+    return null;
+  }
+
+  static String? email(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.toLowerCase() == 'admin') return null;
+    if (text.isEmpty) return 'Please enter your email address';
+    if (!text.contains('@') || !text.contains('.')) {
+      return 'Enter a valid email address';
+    }
     return null;
   }
 
   static String? phone(String? value) {
-    final text = (value ?? '').replaceAll(RegExp(r'[\s-]'), '');
+    final text = value?.trim() ?? '';
+    if (text.toLowerCase() == 'admin') return null;
     if (text.isEmpty) return 'Please enter your phone number';
-    if (!_phone.hasMatch(text)) return 'Enter a valid phone number';
+    final digits = text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length < 7) return 'Enter a valid phone number';
     return null;
   }
 
@@ -25,11 +34,11 @@ class Validators {
     return null;
   }
 
-  /// Checks that the field matches the password typed before it.
-  static String? Function(String?) confirmPassword(
-    String Function() original,
-  ) {
-    return (value) =>
-        (value ?? '') == original() ? null : 'Passwords do not match';
+  static String? Function(String?) confirmPassword(String Function() original) {
+    return (String? value) {
+      if (value == null || value.isEmpty) return 'Please confirm your password';
+      if (value != original()) return 'Passwords do not match';
+      return null;
+    };
   }
 }

@@ -1,14 +1,16 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_strings.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/locale_provider.dart';
 import '../providers/membership_provider.dart';
+import '../widgets/language_selector.dart';
 import '../widgets/theme_selector.dart';
 import 'cart_screen.dart';
 import 'tickets_screen.dart';
 
-/// Profile, appearance, shortcuts and log out.
 class AccountTab extends StatelessWidget {
   const AccountTab({super.key, required this.onNavigate});
 
@@ -46,10 +48,11 @@ class AccountTab extends StatelessWidget {
     final theme = Theme.of(context);
     final user = context.watch<AuthProvider>().user;
     final tier = context.watch<MembershipProvider>().tierFor(user?.id);
+    final lang = context.watch<LocaleProvider>().language;
     final name = user?.name ?? '';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+      appBar: AppBar(title: Text(AppStrings.of(lang, 'account'))),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -71,7 +74,7 @@ class AccountTab extends StatelessWidget {
                         radius: 28,
                         backgroundColor: theme.colorScheme.primary,
                         child: Text(
-                          name.isEmpty ? '?' : name[0].toUpperCase(),
+                          name.isEmpty ? '?' : name.toUpperCase(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 22,
@@ -95,7 +98,7 @@ class AccountTab extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               tier == null
-                                  ? 'Free fan'
+                                  ? AppStrings.of(lang, 'free_fan')
                                   : '${tier.label} member',
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: tier?.color,
@@ -110,11 +113,13 @@ class AccountTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+              const LanguageSelector(),
+              const SizedBox(height: 12),
               const ThemeSelector(),
               const SizedBox(height: 12),
               _MenuTile(
                 icon: Icons.confirmation_number_outlined,
-                title: 'My tickets',
+                title: AppStrings.of(lang, 'my_tickets'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
                       builder: (_) => const TicketsScreen()),
@@ -122,19 +127,19 @@ class AccountTab extends StatelessWidget {
               ),
               _MenuTile(
                 icon: Icons.shopping_cart_outlined,
-                title: 'My cart',
+                title: AppStrings.of(lang, 'my_cart'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(builder: (_) => const CartScreen()),
                 ),
               ),
               _MenuTile(
                 icon: Icons.workspace_premium_outlined,
-                title: 'Membership',
+                title: AppStrings.of(lang, 'membership'),
                 onTap: () => onNavigate(3),
               ),
               _MenuTile(
                 icon: Icons.logout,
-                title: 'Log out',
+                title: AppStrings.of(lang, 'log_out'),
                 onTap: () => _logout(context),
               ),
             ],
