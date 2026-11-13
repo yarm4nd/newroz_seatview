@@ -7,11 +7,9 @@ import '../core/constants.dart';
 import '../core/formatters.dart';
 import '../core/theme.dart';
 import '../core/translator.dart';
-import '../data/iraq_league_fixtures.dart';
-import '../data/news.dart';
-import '../data/shop_products.dart';
 import '../models/league_match.dart';
 import '../models/membership_tier.dart';
+import '../providers/admin_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/membership_provider.dart';
@@ -43,9 +41,11 @@ class HomeTab extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final tier = context.watch<MembershipProvider>().tierFor(auth.user?.id);
     final lang = context.watch<LocaleProvider>().language;
+    final admin = context.watch<AdminProvider>();
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final upcoming = IraqLeagueFixtures.all.where((m) => m.involvesNewroz && !m.day.isBefore(today)).toList();
+    final upcoming = admin.matches.where((m) => m.involvesNewroz && !m.day.isBefore(today)).toList();
     final next = upcoming.isEmpty ? null : upcoming.first;
     final later = upcoming.skip(1).take(4).toList();
     final firstName = (auth.user?.name ?? '').trim().split(' ').first;
@@ -63,7 +63,7 @@ class HomeTab extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (next != null) _NextMatchCard(match: next, lang: lang, onBook: () => _openBooking(context)) else const _NoMatchCard(),
+                      if (next != null) _NextMatchCard(match: next, score: admin.scoreFor(next), lang: lang, onBook: () => _openBooking(context)) else const _NoMatchCard(),
                       const SizedBox(height: 16),
                       Row(children: [
                         Expanded(child: _ActionTile(icon: Icons.event_seat, label: AppStrings.of(lang, 'book_seats'), onTap: () => _openBooking(context))),
@@ -74,21 +74,21 @@ class HomeTab extends StatelessWidget {
                       if (later.isNotEmpty) ...[
                         const SizedBox(height: 24),
                         _SectionHeader(title: AppStrings.of(lang, 'fixtures'), action: AppStrings.of(lang, 'see_all'), onAction: () => onNavigate(1)),
-                        for (final match in later) _FixtureTile(match: match, lang: lang),
+                        for (final match in later) _FixtureTile(match: match, score: admin.scoreFor(match), lang: lang),
                       ],
                       const SizedBox(height: 24),
                       _SectionHeader(title: AppStrings.of(lang, 'latest_news'), action: AppStrings.of(lang, 'see_all'), onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NewsScreen()))),
-                      for (final item in NewsData.all.take(2)) NewsCard(item: item),
+                      for (final item in admin.news.take(2)) NewsCard(item: item),
                       const SizedBox(height: 24),
                       _SectionHeader(title: AppStrings.of(lang, 'team_shop'), action: AppStrings.of(lang, 'open_shop'), onAction: () => onNavigate(2)),
                       SizedBox(
                         height: 150,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          itemCount: ShopProducts.all.length < 6 ? ShopProducts.all.length : 6,
+                          itemCount: admin.products.length < 6 ? admin.products.length : 6,
                           separatorBuilder: (_, __) => const SizedBox(width: 12),
                           itemBuilder: (context, index) {
-                            final product = ShopProducts.all[index];
+                            final product = admin.products[index];
                             return GestureDetector(
                               onTap: () => onNavigate(2),
                               child: SizedBox(
@@ -117,6 +117,7 @@ class HomeTab extends StatelessWidget {
     );
   }
 }
+
 class _Header extends StatelessWidget {
   const _Header({required this.name, required this.tier, required this.lang});
   final String name;
@@ -130,7 +131,7 @@ class _Header extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 24, 20, 28),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF065F46), Color(0xFF10B981)]),
+        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF8B0018), Color(0xFFC8102E)]),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
       child: Row(children: [
@@ -155,8 +156,9 @@ class _Header extends StatelessWidget {
 }
 
 class _NextMatchCard extends StatelessWidget {
-  const _NextMatchCard({required this.match, required this.lang, required this.onBook});
+  const _NextMatchCard({required this.match, required this.score, required this.lang, required this.onBook});
   final LeagueMatch match;
+  final String? score;
   final AppLanguage lang;
   final VoidCallback onBook;
 
@@ -174,7 +176,10 @@ class _NextMatchCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(children: [
             Expanded(child: _Team(name: Tr.text(lang, match.home))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text('VS', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: theme.colorScheme.outline))),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(score ?? 'VS', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: score != null ? AppColors.emerald : theme.colorScheme.outline)),
+            ),
             Expanded(child: _Team(name: Tr.text(lang, match.away))),
           ]),
           const SizedBox(height: 16),
@@ -183,111 +188,105 @@ class _NextMatchCard extends StatelessWidget {
           _InfoRow(icon: Icons.location_on_outlined, text: match.isNewrozHome ? Tr.text(lang, AppConstants.venue) : AppStrings.of(lang, 'away_badge')),
           const SizedBox(height: 16),
           if (match.isNewrozHome)
-            FilledButton.icon(onPressed: onBook, icon: const Icon(Icons.event_seat), label: Text(AppStrings.of(lang, 'book_tickets')))
-          else
-            Text('This is an away match.', style: theme.textTheme.bodySmall),
-        ]),
-      ),
-    );
-  }
+FilledButton.icon(onPressed: onBook, icon: const Icon(Icons.event_seat), label: Text(AppStrings.of(lang, 'book_tickets')))
+else
+Text('This is an away match.', style: theme.textTheme.bodySmall),
+]),
+),
+);
 }
-
+}
 class _NoMatchCard extends StatelessWidget {
-  const _NoMatchCard();
-  @override
-  Widget build(BuildContext context) => const Card(child: Padding(padding: EdgeInsets.all(20), child: Text('No upcoming matches.')));
+const _NoMatchCard();
+@override
+Widget build(BuildContext context) => const Card(child: Padding(padding: EdgeInsets.all(20), child: Text('No upcoming matches.')));
 }
-
 class _Team extends StatelessWidget {
-  const _Team({required this.name});
-  final String name;
-  @override
-  Widget build(BuildContext context) => Column(children: [TeamCrest(name: name, size: 56), const SizedBox(height: 8), Text(name, maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))]);
+const _Team({required this.name});
+final String name;
+@override
+Widget build(BuildContext context) => Column(children: [TeamCrest(name: name, size: 56), const SizedBox(height: 8), Text(name, maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))]);
 }
-
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.text});
-  final IconData icon;
-  final String text;
-  @override
-  Widget build(BuildContext context) => Row(children: [Icon(icon, size: 18, color: AppColors.emerald), const SizedBox(width: 8), Expanded(child: Text(text))]);
+const _InfoRow({required this.icon, required this.text});
+final IconData icon;
+final String text;
+@override
+Widget build(BuildContext context) => Row(children: [Icon(icon, size: 18, color: AppColors.emerald), const SizedBox(width: 8), Expanded(child: Text(text))]);
 }
-
 class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.icon, required this.label, required this.onTap});
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Column(children: [
-          Container(width: 52, height: 52, decoration: BoxDecoration(color: theme.colorScheme.primaryContainer, borderRadius: BorderRadius.circular(16)), child: Icon(icon, color: theme.colorScheme.primary)),
-          const SizedBox(height: 6),
-          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.labelMedium),
-        ]),
-      ),
-    );
-  }
+const _ActionTile({required this.icon, required this.label, required this.onTap});
+final IconData icon;
+final String label;
+final VoidCallback onTap;
+@override
+Widget build(BuildContext context) {
+final theme = Theme.of(context);
+return InkWell(
+borderRadius: BorderRadius.circular(16),
+onTap: onTap,
+child: Padding(
+padding: const EdgeInsets.symmetric(vertical: 10),
+child: Column(children: [
+Container(width: 52, height: 52, decoration: BoxDecoration(color: theme.colorScheme.primaryContainer, borderRadius: BorderRadius.circular(16)), child: Icon(icon, color: theme.colorScheme.primary)),
+const SizedBox(height: 6),
+Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.labelMedium),
+]),
+),
+);
 }
-
+}
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.action, required this.onAction});
-  final String title;
-  final String action;
-  final VoidCallback onAction;
-  @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800))), TextButton(onPressed: onAction, child: Text(action))]));
+const _SectionHeader({required this.title, required this.action, required this.onAction});
+final String title;
+final String action;
+final VoidCallback onAction;
+@override
+Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800))), TextButton(onPressed: onAction, child: Text(action))]));
 }
-
 class _FixtureTile extends StatelessWidget {
-  const _FixtureTile({required this.match, required this.lang});
-  final LeagueMatch match;
-  final AppLanguage lang;
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final opponent = match.isNewrozHome ? match.away : match.home;
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: theme.colorScheme.outlineVariant)),
-      child: ListTile(
-        leading: TeamCrest(name: opponent, size: 40),
-        title: Text('${Tr.text(lang, match.home)} vs ${Tr.text(lang, match.away)}'),
-        subtitle: Text(_when(match, lang)),
-        trailing: Text(match.isNewrozHome ? AppStrings.of(lang, 'home_badge') : AppStrings.of(lang, 'away_badge'), style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, color: match.isNewrozHome ? AppColors.emerald : theme.colorScheme.outline)),
-      ),
-    );
-  }
+const _FixtureTile({required this.match, required this.score, required this.lang});
+final LeagueMatch match;
+final String? score;
+final AppLanguage lang;
+@override
+Widget build(BuildContext context) {
+final theme = Theme.of(context);
+final opponent = match.isNewrozHome ? match.away : match.home;
+return Card(
+elevation: 0,
+margin: const EdgeInsets.only(bottom: 8),
+shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: theme.colorScheme.outlineVariant)),
+child: ListTile(
+leading: TeamCrest(name: opponent, size: 40),
+title: Text('${Tr.text(lang, match.home)} ${score ?? 'vs'} ${Tr.text(lang, match.away)}'),
+subtitle: Text(_when(match, lang)),
+trailing: Text(match.isNewrozHome ? AppStrings.of(lang, 'home_badge') : AppStrings.of(lang, 'away_badge'), style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, color: match.isNewrozHome ? AppColors.emerald : theme.colorScheme.outline)),
+),
+);
 }
-
+}
 class _MembershipPromo extends StatelessWidget {
-  const _MembershipPromo({required this.tier, required this.lang, required this.onTap});
-  final MembershipTier? tier;
-  final AppLanguage lang;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final current = tier;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF064E3B), Color(0xFF0F291E)]), borderRadius: BorderRadius.circular(20)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Icon(Icons.workspace_premium, color: AppColors.gold, size: 32),
-        const SizedBox(height: 8),
-        Text(current == null ? AppStrings.of(lang, 'join_family') : Tr.text(lang, current.label), style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 4),
-        Text(AppStrings.of(lang, 'join_desc'), style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70)),
-        const SizedBox(height: 16),
-        FilledButton(onPressed: onTap, child: Text(current == null ? AppStrings.of(lang, 'view_plans') : AppStrings.of(lang, 'manage_membership'))),
-      ]),
-    );
-  }
+const _MembershipPromo({required this.tier, required this.lang, required this.onTap});
+final MembershipTier? tier;
+final AppLanguage lang;
+final VoidCallback onTap;
+@override
+Widget build(BuildContext context) {
+final theme = Theme.of(context);
+final current = tier;
+return Container(
+padding: const EdgeInsets.all(20),
+decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF7F1D1D), Color(0xFF1F1215)]), borderRadius: BorderRadius.circular(20)),
+child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+const Icon(Icons.workspace_premium, color: AppColors.gold, size: 32),
+const SizedBox(height: 8),
+Text(current == null ? AppStrings.of(lang, 'join_family') : Tr.text(lang, current.label), style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
+const SizedBox(height: 4),
+Text(AppStrings.of(lang, 'join_desc'), style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+const SizedBox(height: 16),
+FilledButton(onPressed: onTap, child: Text(current == null ? AppStrings.of(lang, 'view_plans') : AppStrings.of(lang, 'manage_membership'))),
+]),
+);
+}
 }

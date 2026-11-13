@@ -9,6 +9,7 @@ import '../core/validators.dart';
 import '../providers/auth_provider.dart';
 import '../providers/locale_provider.dart';
 import 'admin_screen.dart';
+import 'language_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -83,98 +84,124 @@ class _LoginScreenState extends State<LoginScreen> {
     final lang = context.watch<LocaleProvider>().language;
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        actions: [
+          TextButton.icon(
+            onPressed: () => Navigator.of(context).pushReplacement(
+              MaterialPageRoute<void>(builder: (_) => const LanguageScreen()),
+            ),
+            icon: const Icon(Icons.language, color: AppColors.emerald),
+            label: Text(lang.label, style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Center(
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundColor: AppColors.emerald,
-                        child: Icon(Icons.shield, color: Colors.white, size: 44),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      AppConstants.appName,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      AppStrings.of(lang, 'login_sub'),
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: 28),
-                    TextFormField(
-                      controller: _identifierController,
-                      enabled: !_isLoading,
-                      keyboardType: _usePhone ? TextInputType.phone : TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.of(lang, _usePhone ? 'phone' : 'email'),
-                        hintText: _usePhone ? '+964 750 123 4567' : 'name@email.com',
-                        prefixIcon: Icon(_usePhone ? Icons.phone_outlined : Icons.email_outlined),
-                        border: const OutlineInputBorder(),
-                      ),
-                      validator: _usePhone ? Validators.phone : Validators.email,
-                    ),
-                    Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: TextButton(
-                        onPressed: _isLoading ? null : _toggleMethod,
-                        child: Text(AppStrings.of(lang, _usePhone ? 'use_email' : 'forgot_email')),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _passwordController,
-                      enabled: !_isLoading,
-                      obscureText: _obscure,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(
-                        labelText: AppStrings.of(lang, 'password'),
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                        ),
-                      ),
-                      validator: (value) => (value == null || value.isEmpty) ? 'Please enter your password' : null,
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: _isLoading ? null : _submit,
-                      child: _isLoading
-                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5))
-                          : Text(AppStrings.of(lang, 'log_in')),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              child: Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  side: BorderSide(color: theme.colorScheme.outlineVariant),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(AppStrings.of(lang, 'no_account')),
-                        TextButton(
+                        Center(
+                          child: Container(
+                            width: 82,
+                            height: 82,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [AppColors.crimsonDark, AppColors.emerald],
+                              ),
+                            ),
+                            child: const Icon(Icons.shield, color: Colors.white, size: 42),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          AppConstants.appName,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          AppStrings.of(lang, 'login_sub'),
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                          controller: _identifierController,
+                          enabled: !_isLoading,
+                          keyboardType: _usePhone ? TextInputType.phone : TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          decoration: InputDecoration(
+                            labelText: AppStrings.of(lang, _usePhone ? 'phone' : 'email'),
+                            hintText: _usePhone ? '+964 750 123 4567' : 'name@email.com',
+                            prefixIcon: Icon(_usePhone ? Icons.phone_outlined : Icons.email_outlined, color: AppColors.emerald),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          validator: _usePhone ? Validators.phone : Validators.email,
+                        ),
+                        Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: TextButton(
+                            onPressed: _isLoading ? null : _toggleMethod,
+                            child: Text(AppStrings.of(lang, _usePhone ? 'use_email' : 'forgot_email')),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _passwordController,
+                          enabled: !_isLoading,
+                          obscureText: _obscure,
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _submit(),
+                          decoration: InputDecoration(
+                            labelText: AppStrings.of(lang, 'password'),
+                            prefixIcon: const Icon(Icons.lock_outline, color: AppColors.emerald),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                              onPressed: () => setState(() => _obscure = !_obscure),
+                            ),
+                          ),
+                          validator: (value) => (value == null || value.isEmpty) ? 'Please enter your password' : null,
+                        ),
+                        const SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: _isLoading ? null : _submit,
+                          child: _isLoading
+                              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                              : Text(AppStrings.of(lang, 'log_in')),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                           onPressed: _isLoading
                               ? null
                               : () => Navigator.of(context).push(
                                     MaterialPageRoute<void>(builder: (_) => const RegisterScreen()),
                                   ),
-                          child: Text(AppStrings.of(lang, 'create_account')),
+                          icon: const Icon(Icons.person_add_alt_1),
+                          label: Text(AppStrings.of(lang, 'create_account')),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

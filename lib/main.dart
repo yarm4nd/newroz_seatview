@@ -56,8 +56,8 @@ class NewrozApp extends StatelessWidget {
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.lightFor(isRtl: localeProvider.isRtl),
+      darkTheme: AppTheme.darkFor(isRtl: localeProvider.isRtl),
       themeMode: themeProvider.mode,
       builder: (context, child) {
         return Directionality(
